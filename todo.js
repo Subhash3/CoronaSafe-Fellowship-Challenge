@@ -52,7 +52,7 @@ const createFile = (file) => {
     fs.closeSync(fs.openSync(file, 'w'))
 }
 
-const addTodo = (item) => {
+const addTodo = (item, dontPrintStuff) => {
     if (!item) {
         console.log("Error: Missing todo string. Nothing added!")
         return
@@ -74,24 +74,36 @@ const addTodo = (item) => {
         return
     }
 
-    console.log(`Added todo: "${item}"`)
+    if (!dontPrintStuff) {
+        console.log(`Added todo: "${item}"`)
+    }
 
     return
+}
+
+const todosToArr = (file) => {
+    let allTodos, allTodosArr, noOfTodos, i
+
+    allTodos = fs.readFileSync(pendingTodosFile).toLocaleString()
+
+    allTodosArr = allTodos.split('\n')
+    noOfTodos = allTodosArr.length - 1 // last item is just an empty string
+
+    return [allTodos, allTodosArr, noOfTodos]
+}
+
+const emptyOutAFile = (file) => {
+    fs.truncateSync(file, 0)
 }
 
 const showRemainingTodos = () => {
     let allTodos, allTodosArr, noOfTodos, i, allTodosString
 
-    allTodos = fs.readFileSync(pendingTodosFile).toLocaleString()
-
+    [allTodos, allTodosArr, noOfTodos] = todosToArr(pendingTodosFile)
     if (allTodos == "") {
         console.log("There are no pending todos!")
         return
     }
-    // console.log(allTodos)
-    allTodosArr = allTodos.split('\n')
-    // console.log(allTodosArr)
-    noOfTodos = allTodosArr.length - 1 // last item is just an empty string
 
     allTodosString = ""
     for (i = noOfTodos - 1; i >= 0; i--) {
@@ -105,6 +117,37 @@ const showRemainingTodos = () => {
     return;
 }
 
+const deleteTodo = (number) => {
+    if (number != 0 && !number) {
+        console.log("Error: Missing NUMBER for deleting todo.")
+        return
+    }
+    let allTodos, allTodosArr, noOfTodos, i
+
+    [allTodos, allTodosArr, noOfTodos] = todosToArr(pendingTodosFile)
+    if (allTodos == "") {
+        // console.log("There are no pending todos!")
+        return
+    }
+
+    if (number < 1 || number > noOfTodos) {
+        console.log(`Error: todo #${number} does not exist. Nothing deleted.`)
+        return
+    }
+
+    emptyOutAFile(pendingTodosFile)
+    // console.log(allTodosArr)
+
+    for (i = 0; i < noOfTodos; i++) {
+        if (number != i + 1) {
+            addTodo(allTodosArr[i], true)
+        }
+    }
+
+    console.log(`Deleted todo #${number}`)
+    return;
+}
+
 preprocess()
 
 let [command, info] = parseArgs()
@@ -115,6 +158,8 @@ switch (command) {
     case "add": addTodo(info)
         break
     case "ls": showRemainingTodos()
+        break
+    case "del": deleteTodo(parseInt(info))
         break
     default: console.log("Not implemented yet!")
 }
