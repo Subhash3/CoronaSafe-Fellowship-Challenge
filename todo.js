@@ -40,8 +40,24 @@ $ ./todo report           # Statistics`)
 }
 
 const addTodo = (item) => {
-    let data = fs.readFileSync(pendingTodosFile)
-    console.log(data)
+    let allTodos, updatedTodos
+    try {
+        allTodos = fs.readFileSync(pendingTodosFile)
+    } catch (readErr) {
+        console.log("Error while reading: ", readErr)
+        return
+    }
+    updatedTodos = item + '\n' + allTodos
+    // console.log(allTodos)
+    // console.log(updatedTodos)
+    try {
+        fs.writeFileSync(pendingTodosFile, updatedTodos)
+    } catch (writeErr) {
+        console.log("Error while writing: ", writeErr)
+        return
+    }
+
+    return
 }
 
 let [command, info] = parseArgs()
