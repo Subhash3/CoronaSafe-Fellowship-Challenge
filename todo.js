@@ -25,7 +25,6 @@ const parseArgs = () => {
         }
     }
 
-
     return [command, info]
 }
 
@@ -47,7 +46,7 @@ const addTodo = (item) => {
         console.log("Error while reading: ", readErr)
         return
     }
-    updatedTodos = item + '\n' + allTodos
+    updatedTodos = allTodos + item + '\n'
     // console.log(allTodos)
     // console.log(updatedTodos)
     try {
@@ -57,7 +56,35 @@ const addTodo = (item) => {
         return
     }
 
+    console.log("Added todo:", item)
+
     return
+}
+
+const showRemainingTodos = () => {
+    let allTodos, allTodosArr, noOfTodos, i, allTodosString
+
+    allTodos = fs.readFileSync(pendingTodosFile).toLocaleString()
+
+    if (allTodos == "") {
+        console.log("No pending todos")
+        return
+    }
+    // console.log(allTodos)
+    allTodosArr = allTodos.split('\n')
+    console.log(allTodosArr)
+    noOfTodos = allTodosArr.length - 1 // last item is just an empty string
+
+    allTodosString = ""
+    for (i = noOfTodos - 1; i >= 0; i--) {
+        allTodosString += `[${i + 1}] ${allTodosArr[i]}`
+        if (i != 0) {
+            allTodosString += '\n'
+        }
+    }
+
+    console.log(allTodosString)
+    return;
 }
 
 let [command, info] = parseArgs()
@@ -66,6 +93,8 @@ switch (command) {
     case "help": displayHelp()
         break
     case "add": addTodo(info)
+        break
+    case "ls": showRemainingTodos()
         break
     default: console.log("Not implemented yet!")
 }
