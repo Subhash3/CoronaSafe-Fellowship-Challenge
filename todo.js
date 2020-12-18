@@ -52,14 +52,10 @@ const createFile = (file) => {
     fs.closeSync(fs.openSync(file, 'w'))
 }
 
-const addTodo = (item, dontPrintStuff) => {
-    if (!item) {
-        console.log("Error: Missing todo string. Nothing added!")
-        return
-    }
+const writeTodoToFile = (file, item) => {
     let allTodos, updatedTodos
     try {
-        allTodos = fs.readFileSync(pendingTodosFile)
+        allTodos = fs.readFileSync(file)
     } catch (readErr) {
         console.log("Error while reading: ", readErr)
         return
@@ -68,11 +64,22 @@ const addTodo = (item, dontPrintStuff) => {
     // console.log(allTodos)
     // console.log(updatedTodos)
     try {
-        fs.writeFileSync(pendingTodosFile, updatedTodos)
+        fs.writeFileSync(file, updatedTodos)
     } catch (writeErr) {
         console.log("Error while writing: ", writeErr)
         return
     }
+
+    return
+}
+
+const addTodo = (item, dontPrintStuff) => {
+    if (!item) {
+        console.log("Error: Missing todo string. Nothing added!")
+        return
+    }
+
+    writeTodoToFile(pendingTodosFile, item)
 
     if (!dontPrintStuff) {
         console.log(`Added todo: "${item}"`)
@@ -84,7 +91,7 @@ const addTodo = (item, dontPrintStuff) => {
 const todosToArr = (file) => {
     let allTodos, allTodosArr, noOfTodos, i
 
-    allTodos = fs.readFileSync(pendingTodosFile).toLocaleString()
+    allTodos = fs.readFileSync(file).toLocaleString()
 
     allTodosArr = allTodos.split('\n')
     noOfTodos = allTodosArr.length - 1 // last item is just an empty string
@@ -117,7 +124,7 @@ const showRemainingTodos = () => {
     return;
 }
 
-const deleteTodo = (number) => {
+const deleteTodo = (number, dontPrintStuff) => {
     if (number != 0 && !number) {
         console.log("Error: Missing NUMBER for deleting todo.")
         return
@@ -144,8 +151,39 @@ const deleteTodo = (number) => {
         }
     }
 
-    console.log(`Deleted todo #${number}`)
-    return;
+    if (!dontPrintStuff) {
+        console.log(`Deleted todo #${number}`)
+    }
+    return allTodosArr[number - 1]
+}
+
+const getFormattedDate = () => {
+    return new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '').split(' ')[0]
+}
+
+const markTodoAsDone = (number) => {
+    if (number != 0 && !number) {
+        console.log("Error: Missing NUMBER for marking todo as done.")
+        return
+    }
+
+    let removedTodo
+
+    removedTodo = deleteTodo(number, true)
+    removedTodo = `x ${getFormattedDate()} ${removedTodo}`
+
+    writeTodoToFile(completedTodosFile, removedTodo)
+    console.log(`Marked todo #${number} as done.`)
+
+    return
+}
+
+const displayReport = () => {
+    let [_pendingTodos, _pendingTodosArr, noOfPendingTodos] = todosToArr(pendingTodosFile)
+    let [_completedTodos, _completedTodosArr, noOfCompletedTodos] = todosToArr(completedTodosFile)
+
+    console.log(`${getFormattedDate()} Pending : ${noOfPendingTodos} Completed : ${noOfCompletedTodos}`)
+    return
 }
 
 preprocess()
@@ -160,6 +198,10 @@ switch (command) {
     case "ls": showRemainingTodos()
         break
     case "del": deleteTodo(parseInt(info))
+        break
+    case "done": markTodoAsDone(parseInt(info))
+        break
+    case "report": displayReport()
         break
     default: console.log("Not implemented yet!")
 }
