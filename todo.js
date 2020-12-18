@@ -2,10 +2,20 @@ const path = require('path')
 const fs = require('fs')
 const { exit } = require('process')
 
-const pendingTodosFile = path.join('./todo.txt')
-const completedTodosFile = path.join('./done.txt')
+const pendingTodosFile = path.join('todo.txt')
+const completedTodosFile = path.join('done.txt')
 const argv = process.argv
 const argc = argv.length
+
+const preprocess = () => {
+    if (!fs.existsSync(pendingTodosFile)) {
+        fs.closeSync(fs.openSync(pendingTodosFile, 'w'))
+    }
+    if (!fs.existsSync(completedTodosFile)) {
+        fs.closeSync(fs.openSync(completedTodosFile, 'w'))
+    }
+    return
+}
 
 const parseArgs = () => {
     let command, info = null
@@ -38,7 +48,15 @@ $ ./todo help             # Show usage
 $ ./todo report           # Statistics`)
 }
 
+const createFile = (file) => {
+    fs.closeSync(fs.openSync(file, 'w'))
+}
+
 const addTodo = (item) => {
+    if (!item) {
+        console.log("Error: Missing todo string. Nothing added!")
+        return
+    }
     let allTodos, updatedTodos
     try {
         allTodos = fs.readFileSync(pendingTodosFile)
@@ -56,7 +74,7 @@ const addTodo = (item) => {
         return
     }
 
-    console.log("Added todo:", item)
+    console.log(`Added todo: "${item}"`)
 
     return
 }
@@ -67,12 +85,12 @@ const showRemainingTodos = () => {
     allTodos = fs.readFileSync(pendingTodosFile).toLocaleString()
 
     if (allTodos == "") {
-        console.log("No pending todos")
+        console.log("There are no pending todos!")
         return
     }
     // console.log(allTodos)
     allTodosArr = allTodos.split('\n')
-    console.log(allTodosArr)
+    // console.log(allTodosArr)
     noOfTodos = allTodosArr.length - 1 // last item is just an empty string
 
     allTodosString = ""
@@ -87,9 +105,11 @@ const showRemainingTodos = () => {
     return;
 }
 
-let [command, info] = parseArgs()
+preprocess()
 
+let [command, info] = parseArgs()
 switch (command) {
+    case undefined:
     case "help": displayHelp()
         break
     case "add": addTodo(info)
