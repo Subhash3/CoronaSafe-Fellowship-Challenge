@@ -7,13 +7,16 @@ const completedTodosFile = path.join('done.txt')
 const argv = process.argv
 const argc = argv.length
 
+const createFile = (file) => {
+    fs.closeSync(fs.openSync(file, 'w'))
+}
+
 const preprocess = () => {
-    if (!fs.existsSync(pendingTodosFile)) {
-        fs.closeSync(fs.openSync(pendingTodosFile, 'w'))
-    }
-    if (!fs.existsSync(completedTodosFile)) {
-        fs.closeSync(fs.openSync(completedTodosFile, 'w'))
-    }
+    [pendingTodosFile, completedTodosFile].forEach(file => {
+        if (!fs.existsSync(file)) {
+            createFile(file)
+        }
+    })
     return
 }
 
@@ -46,10 +49,6 @@ $ ./todo del NUMBER       # Delete a todo
 $ ./todo done NUMBER      # Complete a todo
 $ ./todo help             # Show usage
 $ ./todo report           # Statistics`)
-}
-
-const createFile = (file) => {
-    fs.closeSync(fs.openSync(file, 'w'))
 }
 
 const writeTodoToFile = (file, item) => {
